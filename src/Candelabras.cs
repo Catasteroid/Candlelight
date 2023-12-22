@@ -65,7 +65,7 @@ namespace Candlelight
             } 
 			else
 			{
-				if (!byPlayer.Controls.ShiftKey)
+				if (!byPlayer.Entity.Controls.ShiftKey)
 				{
 					if (!Lit)
 					{
@@ -236,7 +236,7 @@ namespace Candlelight
             ItemStack itemstack = byPlayer.InventoryManager.ActiveHotbarSlot?.Itemstack;
 
 			// If they're not holding shift down place a candle if they're holding on or toggle lit/unlit if they're not
-			if (!byPlayer.Controls.ShiftKey)
+			if (!byPlayer.Entity.Controls.ShiftKey)
 			{
 				// Attempt to add a candle to the candelabra
 				if (itemstack != null && itemstack.Collectible.Code.Path == "candle" && CandleCount != 8)
