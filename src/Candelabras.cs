@@ -20,7 +20,7 @@ namespace Candlelight
 	public class BlockSimpleCandelabra : Block
     {
 	
-		private int numCandles;
+		private int maxCandles;
 	
         public bool Empty
         {
@@ -32,16 +32,24 @@ namespace Candlelight
             get { return Variant["state"] == "lit"; }
         }
 		
+		public override void OnLoaded(ICoreAPI api)
+        {
+            base.OnLoaded(api);
+			if (Attributes["maxCandles"].Exists)
+            {
+                maxCandles = Attributes["maxCandles"].AsInt(1);		
+			}
+		}
+		
         public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
         {
-			numCandles = Block.Attributes?["numCandles"]?.AsInt() ?? 1;
 			
             if (Empty)
             {
                 ItemStack heldStack = byPlayer.InventoryManager.ActiveHotbarSlot.Itemstack;
-                if (heldStack != null && heldStack.Collectible.Code.Path.Equals("candle") && heldStack.StackSize >= numCandles)
+                if (heldStack != null && heldStack.Collectible.Code.Path.Equals("candle") && heldStack.StackSize >= maxCandles)
                 {
-                    byPlayer.InventoryManager.ActiveHotbarSlot.TakeOut(numCandles);
+                    byPlayer.InventoryManager.ActiveHotbarSlot.TakeOut(maxCandles);
                     byPlayer.InventoryManager.ActiveHotbarSlot.MarkDirty();
 
                     Block filledBlock = world.GetBlock(CodeWithVariant("state", "unlit"));
@@ -57,7 +65,7 @@ namespace Candlelight
             } 
 			else
 			{
-				if (!byEntity.Controls.ShiftKey)
+				if (!byPlayer.Controls.ShiftKey)
 				{
 					if (!Lit)
 					{
@@ -75,7 +83,7 @@ namespace Candlelight
 				else
 				{
 					ItemStack stack = new ItemStack(world.GetItem(new AssetLocation("candle")));
-					stack.StackSize = numCandles;
+					stack.StackSize = maxCandles;
 					if (byPlayer.InventoryManager.TryGiveItemstack(stack, true))
 					{
 						Block filledBlock = world.GetBlock(CodeWithVariant("state", "empty"));
@@ -212,15 +220,23 @@ namespace Candlelight
         {
             get { return Variant["state"] == "lit"; }
         }
+		
+		public override void OnLoaded(ICoreAPI api)
+        {
+            base.OnLoaded(api);
+			if (Attributes["maxCandles"].Exists)
+            {
+                maxCandles = Attributes["maxCandles"].AsInt(1);		
+			}
+		}
 	
 		public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
         {
-			maxCandles = Block.Attributes?["maxCandles"]?.AsInt() ?? 1;
             int candlecount = CandleCount;
             ItemStack itemstack = byPlayer.InventoryManager.ActiveHotbarSlot?.Itemstack;
 
 			// If they're not holding shift down place a candle if they're holding on or toggle lit/unlit if they're not
-			if (!byEntity.Controls.ShiftKey)
+			if (!byPlayer.Controls.ShiftKey)
 			{
 				// Attempt to add a candle to the candelabra
 				if (itemstack != null && itemstack.Collectible.Code.Path == "candle" && CandleCount != 8)
