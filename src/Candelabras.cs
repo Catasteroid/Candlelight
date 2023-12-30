@@ -254,17 +254,24 @@ namespace Candlelight
 				// Attempt to toggle between lit and unlit
 				else if (itemstack == null || itemstack.Collectible.Code.Path != "candle")
 				{
-					if (!Lit)
+				if (CandleCount >)
+					{	
+						if (!Lit)
+						{ 
+							Block filledBlock = world.GetBlock(CodeWithVariant("state", "lit"));
+							world.BlockAccessor.ExchangeBlock(filledBlock.BlockId, blockSel.Position);
+							return false;
+						} 
+						else 
+						{
+							Block filledBlock = world.GetBlock(CodeWithVariant("state", "unlit"));
+							world.BlockAccessor.ExchangeBlock(filledBlock.BlockId, blockSel.Position);
+							return true;
+						}
+					}
+					else
 					{
-						Block filledBlock = world.GetBlock(CodeWithVariant("state", "lit"));
-						world.BlockAccessor.ExchangeBlock(filledBlock.BlockId, blockSel.Position);
-						return false;
-					} 
-					else 
-					{
-						Block filledBlock = world.GetBlock(CodeWithVariant("state", "unlit"));
-						world.BlockAccessor.ExchangeBlock(filledBlock.BlockId, blockSel.Position);
-						return true;
+						capi.TriggerIngameError(this, "notenoughcandles", Lang.Get("needcandlestolight",Generation));
 					}
 				}
 			}
