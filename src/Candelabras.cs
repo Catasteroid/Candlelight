@@ -269,7 +269,7 @@ namespace Candlelight
 							return true;
 						}
 					}
-					else
+					else if (world.Api is ICoreClientAPI capi && world.Api.Side == EnumAppSide.Client)
 					{
 						capi.TriggerIngameError(this, "notenoughcandles", Lang.Get("needcandlestolight",Generation));
 					}
