@@ -254,7 +254,7 @@ namespace Candlelight
 				// Attempt to toggle between lit and unlit
 				else if (itemstack == null || itemstack.Collectible.Code.Path != "candle")
 				{
-				if (CandleCount >)
+				if (CandleCount > 0)
 					{	
 						if (!Lit)
 						{ 
