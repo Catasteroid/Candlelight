@@ -151,7 +151,17 @@ namespace Candlelight
 	public class BlockCandelabra : Block
 	{
 	
-		private int maxCandles;
+		public bool debugMessages;
+	
+		public int maxCandles;
+		
+		public string maxCandlesString
+        {
+            get
+            {
+				return "candle" + maxCandles;
+			}
+		}
 	
 		public int CandleCount
         {
@@ -224,9 +234,18 @@ namespace Candlelight
 		public override void OnLoaded(ICoreAPI api)
         {
             base.OnLoaded(api);
+			if (Attributes["debugMessages"].Exists)
+			{
+				debugMessages = Attributes["debugMessages"].AsBool(false);
+				api.World.Logger.Error("Loaded candelabra {0}, maxCandles: {1}",api.World.GetBlock(CodeWithParts("candlenumber","candle0")),maxCandles);
+			}
 			if (Attributes["maxCandles"].Exists)
             {
                 maxCandles = Attributes["maxCandles"].AsInt(1);		
+				if (debugMessages == true)
+				{
+					api.World.Logger.Error("Loaded candelabra {0}, maxCandles: {1}",api.World.GetBlock(CodeWithParts("candlenumber","candle"+maxCandles)),maxCandles);
+				}
 			}
 		}
 	
@@ -235,43 +254,71 @@ namespace Candlelight
             int candlecount = CandleCount;
             ItemStack itemstack = byPlayer.InventoryManager.ActiveHotbarSlot?.Itemstack;
 
-			// If they're not holding shift down place a candle if they're holding on or toggle lit/unlit if they're not
+			// If they're not holding shift down place a candle if they're holding one or toggle lit/unlit if they're not
 			if (!byPlayer.Entity.Controls.ShiftKey)
 			{
 				// Attempt to add a candle to the candelabra
-				if (itemstack != null && itemstack.Collectible.Code.Path == "candle" && CandleCount != 8)
+				if (itemstack != null && itemstack.Collectible.Code.Path == "candle")
 				{
 					if (byPlayer != null && byPlayer.WorldData.CurrentGameMode == EnumGameMode.Survival)
 					{
-						byPlayer.InventoryManager.ActiveHotbarSlot.TakeOut(1);
-						Block block = world.GetBlock(CodeWithParts("candlenumber",GetNextCandleCount()));
-						world.BlockAccessor.ExchangeBlock(block.BlockId, blockSel.Position);
-						world.BlockAccessor.MarkBlockDirty(blockSel.Position);
-
-						return true;
+						if (CandleCount < maxCandles)
+						{
+							byPlayer.InventoryManager.ActiveHotbarSlot.TakeOut(1);
+							Block block = world.GetBlock(CodeWithParts("candlenumber",GetNextCandleCount()));
+							world.BlockAccessor.ExchangeBlock(block.BlockId, blockSel.Position);
+							world.BlockAccessor.MarkBlockDirty(blockSel.Position);
+							if (debugMessages == true)
+							{
+								world.Logger.Error("Player has added a candle to the candelabra ({0}), it now has {1} candles of {2}",world.GetBlock(CodeWithParts("candlenumber",CandleCount)),CandleCount,maxCandles);
+							}
+							return true;
+						}
+						else
+						{
+							capi.TriggerIngameError(this, "candelabrafull", Lang.Get("candelabrafull"));
+							if (debugMessages == true)
+							{
+								world.Logger.Error("Player attempted to add a candle to the candelabra ({0}), but it had {1} of {2} candles so it was full",world.GetBlock(CodeWithParts("candlenumber",CandleCount)),CandleCount,maxCandles);
+							}
+							return false;
+						}
 					}
 				}
 				// Attempt to toggle between lit and unlit
 				else if (itemstack == null || itemstack.Collectible.Code.Path != "candle")
 				{
-				if (CandleCount > 0)
+					if (CandleCount > 0)
 					{	
+						if (debugMessages == true)
+						{
+							world.Logger.Error("Player attempting to toggle a candelabra ({0})'s lit status, current candles: {1}, max candles: {2}, currently lit: {3}",world.GetBlock(CodeWithParts("candlenumber",CandleCount)),CandleCount,maxCandles,Lit);
+						}
 						if (!Lit)
 						{ 
 							Block filledBlock = world.GetBlock(CodeWithVariant("state", "lit"));
 							world.BlockAccessor.ExchangeBlock(filledBlock.BlockId, blockSel.Position);
-							return false;
+							if (debugMessages == true)
+							{
+								world.Logger.Error("Player has lit the candelabra");
+							}
+							return true;
 						} 
 						else 
 						{
 							Block filledBlock = world.GetBlock(CodeWithVariant("state", "unlit"));
 							world.BlockAccessor.ExchangeBlock(filledBlock.BlockId, blockSel.Position);
+							if (debugMessages == true)
+							{
+								world.Logger.Error("Player has snuffed the candelabra");
+							}
 							return true;
 						}
 					}
 					else if (world.Api is ICoreClientAPI capi && world.Api.Side == EnumAppSide.Client)
 					{
 						capi.TriggerIngameError(this, "notenoughcandles", Lang.Get("needcandlestolight"));
+						return false;
 					}
 				}
 			}
@@ -280,6 +327,10 @@ namespace Candlelight
 				// Attempt to remove a candle from the candelabra if it has any
 				if (CandleCount > 0)
 				{
+					if (debugMessages == true)
+					{
+						world.Logger.Error("Player attempting to remove a candle from {0}, candleCount: {1} maxCandles: {2}",world.GetBlock(CodeWithParts("candlenumber","candle"+CandleCount)),maxCandles);
+					}
 					if (byPlayer != null && byPlayer.WorldData.CurrentGameMode == EnumGameMode.Survival)
 					{
 						ItemStack stack = new ItemStack(world.GetItem(new AssetLocation("candle")));
@@ -288,10 +339,22 @@ namespace Candlelight
 							Block block = world.GetBlock(CodeWithParts("candlenumber",GetPreviousCandleCount()));
 							world.BlockAccessor.ExchangeBlock(block.BlockId, blockSel.Position);
 							world.BlockAccessor.MarkBlockDirty(blockSel.Position);
-							
+							if (debugMessages == true)
+							{                                                                                                                
+								world.Logger.Error("Player removed a candle to the candelabra ({0}), it now has {1} of {2} candles",world.GetBlock(CodeWithParts("candlenumber","candle"+CandleCount)),CandleCount,maxCandles);
+							}
 							return true;
 						}
 					}
+				}
+				else 
+				{
+					// Report that the candelabra is empty and thus candles cannot be removed
+					if (world.Api is ICoreClientAPI capi && world.Api.Side == EnumAppSide.Client)
+					{
+						capi.TriggerIngameError(this, "candelabraempty", Lang.Get("candelabraempty"));
+					}
+					return false;
 				}
 			}
             return false;
