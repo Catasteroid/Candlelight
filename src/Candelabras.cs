@@ -285,7 +285,6 @@ namespace Candlelight
 						}
 						else
 						{
-							if (capo
 							(world.Api as ICoreClientAPI)?.TriggerIngameError(this, "candelabrafull", Lang.Get("candelabrafull"));
 							if (debugMessages == true)
 							{
