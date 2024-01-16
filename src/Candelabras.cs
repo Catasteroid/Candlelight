@@ -233,16 +233,10 @@ namespace Candlelight
             get { return Variant["state"] == "lit"; }
         }
 		
-		public override void Initialize(ICoreAPI api)
-        {
-            base.Initialize(api);
-
-            capi = api as ICoreClientAPI;
-        }
-		
 		public override void OnLoaded(ICoreAPI api)
         {
             base.OnLoaded(api);
+			capi = api as ICoreClientAPI;
 			if (Attributes["debugMessages"].Exists)
 			{
 				debugMessages = Attributes["debugMessages"].AsBool(false);
