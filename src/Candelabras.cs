@@ -155,6 +155,8 @@ namespace Candlelight
 	
 		public int maxCandles;
 		
+		ICoreClientAPI capi;
+		
 		public string maxCandlesString
         {
             get
@@ -231,6 +233,13 @@ namespace Candlelight
             get { return Variant["state"] == "lit"; }
         }
 		
+		public override void Initialize(ICoreAPI api)
+        {
+            base.Initialize(api);
+
+            capi = api as ICoreClientAPI;
+        }
+		
 		public override void OnLoaded(ICoreAPI api)
         {
             base.OnLoaded(api);
@@ -270,16 +279,17 @@ namespace Candlelight
 							world.BlockAccessor.MarkBlockDirty(blockSel.Position);
 							if (debugMessages == true)
 							{
-								world.Logger.Error("Player has added a candle to the candelabra ({0}), it now has {1} candles of {2}",world.GetBlock(CodeWithParts("candlenumber",CandleCount)),CandleCount,maxCandles);
+								world.Logger.Error("Player has added a candle to the candelabra ({0}), it now has {1} candles of {2}",world.GetBlock(CodeWithParts("candlenumber","candle" + CandleCount)),CandleCount,maxCandles);
 							}
 							return true;
 						}
 						else
 						{
-							capi.TriggerIngameError(this, "candelabrafull", Lang.Get("candelabrafull"));
+							if (capo
+							(world.Api as ICoreClientAPI)?.TriggerIngameError(this, "candelabrafull", Lang.Get("candelabrafull"));
 							if (debugMessages == true)
 							{
-								world.Logger.Error("Player attempted to add a candle to the candelabra ({0}), but it had {1} of {2} candles so it was full",world.GetBlock(CodeWithParts("candlenumber",CandleCount)),CandleCount,maxCandles);
+								world.Logger.Error("Player attempted to add a candle to the candelabra ({0}), but it had {1} of {2} candles so it was full",world.GetBlock(CodeWithParts("candlenumber","candle" + CandleCount)),CandleCount,maxCandles);
 							}
 							return false;
 						}
@@ -292,7 +302,7 @@ namespace Candlelight
 					{	
 						if (debugMessages == true)
 						{
-							world.Logger.Error("Player attempting to toggle a candelabra ({0})'s lit status, current candles: {1}, max candles: {2}, currently lit: {3}",world.GetBlock(CodeWithParts("candlenumber",CandleCount)),CandleCount,maxCandles,Lit);
+							world.Logger.Error("Player attempting to toggle a candelabra ({0})'s lit status, current candles: {1}, max candles: {2}, currently lit: {3}",world.GetBlock(CodeWithParts("candlenumber","candle" + CandleCount)),CandleCount,maxCandles,Lit);
 						}
 						if (!Lit)
 						{ 
